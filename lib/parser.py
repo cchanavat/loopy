@@ -1,4 +1,3 @@
-from lib.model import *
 from lib.symbol import *
 
 # inspiration from https://tomekkorbak.com/2020/03/25/implementing-shunting-yard-parsing/
@@ -28,6 +27,7 @@ class Parser:
         return self.unfold(tree)
 
     def tokenize(self, expr):
+        expr = ''.join(expr.split()) # let's remove the spaces
         tokenized = []
         prev = ''
         for char in expr:

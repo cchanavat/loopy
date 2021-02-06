@@ -1,7 +1,8 @@
-import numpy as np
-from lib.parser import *
+from numpy.random import RandomState
+from lib.model import *
 from lib.table import *
 from lib.symbol import *
+from lib.loop import *
 
 
 # Some of the variables
@@ -42,39 +43,69 @@ def K(x, y):
 
 delimiters = [lp, rp]
 
-table_Z3_ = np.array([['e', '1', '2'],
-                      ['1', '2', 'e'],
-                      ['2', 'e', '1']])
+# table_Z3_ = np.array([['e', '1', '2'],
+#                       ['1', '2', 'e'],
+#                       ['2', 'e', '1']])
+#
+# table_Z3 = Table(table_Z3_, ['e', '1', '2'])
+#
+# operators = {star: table_Z3.mul,
+#              dot: table_Z3.mul}
+#
+# model_Z3 = Model(table_Z3, operators, delimiters)
+# parser_Z3 = Parser(model_Z3)
+#
+# # print(parser_Z3.evaluate("1*e.2"))
+# # print(parser_Z3.evaluate("1*e.2.2.e"))
+#
+# table_D3_ = np.array([['e', 'a', 'b', 'c', 'd', 'f'],
+#                       ['a', 'e', 'd', 'f', 'b', 'c'],
+#                       ['b', 'f', 'e', 'd', 'c', 'a'],
+#                       ['c', 'd', 'f', 'e', 'a', 'b'],
+#                       ['d', 'c', 'a', 'b', 'f', 'e'],
+#                       ['f', 'b', 'c', 'a', 'e', 'd']])
+#
+#
+# # table_D3 = Table(table_D3_)
+# # operators = {star: table_D3.mul,
+# #              dot: table_D3.mul,
+# #              left: table_D3.ldiv,
+# #              right: table_D3.rdiv}
+# # model_D3 = Model(table_D3, operators, delimiters)
+# #
+# # print(table_D3, '\n')
+# #
+# # for expr in ["a.b", "a * b", "b.a", "a/a", r"e\a", r"d/b\a", "(a*a)", r"(a.a)\d", "d.a", r"c\d", "e/e.d", r"(d.a)\a"]:
+# #     print(expr, ' = ', model_D3.evaluate(expr))
+# #
+# # expr = "(a)*e"
+# # print(expr, ' = ', model_D3.evaluate(expr))
 
-table_Z3 = Table(table_Z3_, ['e', '1', '2'])
+# TEST LOOP THEORY
+# lid = Axiom("0*x", "x", ['x'], "lid")
+# rid = Axiom("x*0", "x", ['x'], "rid")
+# b1 = Axiom("x\\(x*y)", "y", ['x', 'y'], "b1")
+# b2 = Axiom("x*(x\\y)", "y", ['x', 'y'], "b2")
+# s1 = Axiom("(x*y)/y", "x", ['x', 'y'], "s1")
+# s2 = Axiom("(x/y)*y", "x", ['x', 'y'], "s2")
+#
+# loop_axioms = [lid, rid, b1, b2, s1, s2]
+#
+# rng = RandomState(0)
+# loop_generator = LoopGenerator(4, rng)
+#
+# for i in range(2, 8):
+#     loop_generator = LoopGenerator(i, rng)
+#     my_loop = Table(loop_generator.generate().astype(str), identity="0")
+#     operators = {star: my_loop.mul,
+#                  dot: my_loop.mul,
+#                  left: my_loop.ldiv,
+#                  right: my_loop.rdiv}
+#     my_model = Model(my_loop, operators, delimiters)
+#
+#     print(my_model.table)
+#     for axiom in loop_axioms:
+#         print(axiom.name, " is ", my_model.is_true(axiom))
 
-operators = {star: table_Z3.mul,
-             dot: table_Z3.mul}
-
-model_Z3 = Model(table_Z3.elements, operators, delimiters)
-parser_Z3 = Parser(model_Z3)
-
-# print(parser_Z3.evaluate("1*e.2"))
-# print(parser_Z3.evaluate("1*e.2.2.e"))
-
-table_D3_ = np.array([['e', 'a', 'b', 'c', 'd', 'f'],
-                      ['a', 'e', 'd', 'f', 'b', 'c'],
-                      ['b', 'f', 'e', 'd', 'c', 'a'],
-                      ['c', 'd', 'f', 'e', 'a', 'b'],
-                      ['d', 'c', 'a', 'b', 'f', 'e'],
-                      ['f', 'b', 'c', 'a', 'e', 'd']])
 
 
-table_D3 = Table(table_D3_)
-operators = {star: table_D3.mul,
-             dot: table_D3.mul,
-             left: table_D3.ldiv,
-             right: table_D3.rdiv}
-
-model_D3 = Model(table_D3.elements, operators, delimiters)
-parser_D3 = Parser(model_D3)
-
-print(table_D3, '\n')
-
-for expr in ["a.b", "a*b", "b.a", "a/a", r"e\a", r"d/b\a", "(a*a)", r"(a.a)\d", "d.a", r"c\d", "e/e.d", r"d.a\a", r"(d.a)\a"]:
-    print(expr, ' = ', parser_D3.evaluate(expr))
