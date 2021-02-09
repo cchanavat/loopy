@@ -2,7 +2,7 @@ from numpy.random import RandomState
 from lib.model import *
 from lib.table import *
 from lib.symbol import *
-from lib.loop import *
+from lib.loop_gen import *
 
 star = Operator('*', Notation.INFIX, 2, Priority.LOW)
 dot = Operator('.', Notation.INFIX, 2, Priority.HIGH)
@@ -80,12 +80,7 @@ aim_conjecture = [Ka, aK1, aK2, aK3, aa1, aa2, aa3]
 rng = RandomState(0)
 for _ in range(2, 8):
     loop_generator = LoopGeneratorNaive(4, rng, max_iter=15000)
-    my_loop = Table(loop_generator.generate().astype(str), identity="0")
-    operators = {star: my_loop.mul,
-                 dot: my_loop.mul,
-                 left: my_loop.ldiv,
-                 right: my_loop.rdiv}
-    my_model = Model(my_loop, operators, delimiters)
+    my_model = LoopModel(loop_generator.generate())
 
     print(my_model.table)
 

@@ -1,5 +1,5 @@
 from lib.axiom import *
-from lib.loop import *
+from lib.loop_gen import *
 from lib.model import *
 
 

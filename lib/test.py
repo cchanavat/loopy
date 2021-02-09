@@ -2,7 +2,7 @@ from numpy.random import RandomState
 from lib.model import *
 from lib.table import *
 from lib.symbol import *
-from lib.loop import *
+from lib.loop_gen import *
 
 
 # Some of the variables

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 
+# DEPRECATED
 class Table:
     def __init__(self, table, elements=None, identity='e'):
         """
