@@ -1,19 +1,18 @@
-from lib.loop_gen import *
 import matplotlib.pyplot as plt
+import tqdm
+from lib.loop_gen import *
 
 
-def loop_only():
-    n = 4
-
+def loop_only(n):
     rng = np.random.RandomState(0)
     my_loop_generator = LoopGenerator(n, rng, fill_method="lexico")
 
     my_loop_array = my_loop_generator.generate(axiom_list=[])
 
     # nasty trick, variable name with several char will be fixed
-    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
-    for i in range(n):
-        my_loop_array[my_loop_array == str(i)] = alphabet[i]
+    # alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+    # for i in range(n):
+    #     my_loop_array[my_loop_array == str(i)] = alphabet[i]
 
     my_loop = LoopModel(my_loop_array)
     print(my_loop)
@@ -35,7 +34,7 @@ def loop_only():
     plt.show()
 
 
-def iam():
+def iam(n):
     def a(x, y, z):
         s = r"({x}*({y}*{z}))\(({x}*{y})*{z})".format(x=x, y=y, z=z)
         return s
@@ -70,12 +69,10 @@ def iam():
 
     inner_axiom = [TT, TL, TR, LR, LL, RR]
 
-    n = 10
-
     rng = np.random.RandomState(0)
     my_loop_generator = LoopGenerator(n, rng, fill_method="lexico")
 
-    my_loop_array = my_loop_generator.generate(axiom_list=[TT])
+    my_loop_array = my_loop_generator.generate(axiom_list=inner_axiom)
 
     # nasty trick, variable name with several char will be fixed
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
@@ -105,7 +102,7 @@ def iam():
     plt.show()
 
 
-def moufang():
+def moufang(n):
     variables = ["x", "y", "z"]
     a1 = Axiom("z*(x*(z*y))", "((z*x)*z)*y", variables)
     a2 = Axiom("x*(z*(y*z))", "((x*z)*y)*z", variables)
@@ -113,8 +110,6 @@ def moufang():
     a4 = Axiom("(z*x)*(y*z)", "z*((x*y)*z)", variables)
 
     moufang_axioms = [a1, a2, a3, a4]
-
-    n = 8
 
     rng = np.random.RandomState(0)
     my_loop_generator = LoopGenerator(n, rng, fill_method="lexico")
@@ -149,4 +144,51 @@ def moufang():
     plt.show()
 
 
-moufang()
+def gen_loop(N, n, seed=0):
+    rng = np.random.RandomState(seed)
+    my_loop_generator = LoopGenerator(n, rng, fill_method="lexico")
+    my_loop_generator.verbose = False
+
+    PATH = "data/raw/raw_{}/".format(n)
+    all_loop = []
+    for i in tqdm.tqdm(range(N)):
+        my_loop_array = my_loop_generator.generate()
+        if my_loop_array.tolist() not in all_loop:
+            all_loop.append(my_loop_array.tolist())
+        np.savetxt(PATH + "{}.loop".format(i), my_loop_array, fmt="%s")
+    # print(len(all_loop))
+
+
+def gen_moufang(N, n, seed=0):
+    variables = ["x", "y", "z"]
+    a1 = Axiom("z*(x*(z*y))", "((z*x)*z)*y", variables)
+    a2 = Axiom("x*(z*(y*z))", "((x*z)*y)*z", variables)
+    a3 = Axiom("(z*x)*(y*z)", "(z*(x*y))*z", variables)
+    a4 = Axiom("(z*x)*(y*z)", "z*((x*y)*z)", variables)
+
+    moufang_axioms = [a1, a2, a3, a4]
+
+    rng = np.random.RandomState(seed)
+    my_loop_generator = LoopGenerator(n, rng, fill_method="lexico")
+
+    # my_loop_generator.verbose = False
+
+    PATH = "data/moufang/moufang_{}/".format(n)
+    all_loop = []
+    for _ in tqdm.tqdm(range(N)):
+        my_loop_array = my_loop_generator.generate(axiom_list=moufang_axioms)
+        if my_loop_array.tolist() not in all_loop:
+            all_loop.append(my_loop_array.tolist())
+
+    for i, loop in enumerate(all_loop):
+        np.savetxt(PATH + "{}.loop".format(i), loop, fmt="%s")
+
+    print(len(all_loop), " distinct loops over", N)
+
+
+# gen_moufang(100, 8, seed=2)
+gen_loop(10000, 8)
+#
+# for i in range(13, 20):
+#     gen_loop(100, i)
+

@@ -21,6 +21,8 @@ class Model:
         for i, x in enumerate(self.elements):
             self.element_to_index[x] = i
 
+        self.digits = set(''.join(self.elements)).union(self.elements)
+
     def operators_char(self, priority=None):
         ops_char = []
         for op in self.operators.keys():
@@ -28,7 +30,13 @@ class Model:
                 ops_char.append(op.c)
         return ops_char
 
+    def add_digits(self, digits):
+        self.digits = set(list(self.digits) + digits)
+
     def isdigit(self, char):
+        return char in self.digits
+
+    def iselement(self, char):
         return char in self.elements
 
     def operation(self, symbol):
@@ -78,9 +86,16 @@ class Model:
         if n == 0:
             return self.equal(left, right)
 
+        variables_mapper = {v: None for v in var}
         for elts in product(self.elements, repeat=n):
-            left_instance = self.instantiate(left, var, elts)
-            right_instance = self.instantiate(right, var, elts)
+            if axiom.preparsed:
+                for i, v in enumerate(variables_mapper.keys()):
+                    variables_mapper[v] = elts[i]
+                left_instance = self.parser.unfold(axiom.left_tree, map_var_to_element=variables_mapper)
+                right_instance = self.parser.unfold(axiom.right_tree, map_var_to_element=variables_mapper)
+            else:
+                left_instance = self.instantiate(left, var, elts)
+                right_instance = self.instantiate(right, var, elts)
             if not self.equal(left_instance, right_instance):
                 return False
 
@@ -127,8 +142,6 @@ class LoopModel(Model):
             Implement special character methods
         :param array: the numpy array that represent the loop
         :param identity: identity element of the numpy array, "0" by def.
-        :param operators: operations that can be applied, default are the common operation left, right and mul
-        :param delimiters: default are ( and )
         """
         self.identity = identity
         self.special_character = '&'
@@ -229,3 +242,4 @@ class LoopModel(Model):
         a_special = a_eval == self.special_character
         b_special = b_eval == self.special_character
         return a_eval == b_eval or a_special or b_special
+

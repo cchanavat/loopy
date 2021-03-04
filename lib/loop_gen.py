@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from lib.latin import *
 from lib.model import *
@@ -55,21 +56,41 @@ class LoopGenerator:
         self.trajectory = []
 
         self.random_trajectory_generation = np.array([(i, j) for j in range(1, self.n) for i in range(1, self.n)])
-        self.random_trajectory_generation = rng.permutation(self.random_trajectory_generation)
+        self.random_trajectory_generation = self.rng.permutation(self.random_trajectory_generation)
         self.random_trajectory_generation_index = 0
         self.number_of_case_to_fill = 0
 
         self.axioms = []
         self.loop_model = None
 
-    def generate(self, axiom_list=[]):
+        self.verbose = True
+        self.first_print_verbose = True
+
+    def reset_loop(self):
+        self.loop = np.zeros((self.n, self.n)).astype("str")
+        self.special_char = '&'
+        self.loop[:] = self.special_char
+
+        self.possible_elements = np.zeros((self.n, self.n, self.n))
+        self.initial_probabilities = 1 / self.n * np.ones(self.n)
+        self.trajectory = []
+
+        self.random_trajectory_generation = np.array([(i, j) for j in range(1, self.n) for i in range(1, self.n)])
+        self.random_trajectory_generation = self.rng.permutation(self.random_trajectory_generation)
+        self.random_trajectory_generation_index = 0
+        self.number_of_case_to_fill = 0
+
+    def generate(self, axiom_list=()):
         """
         :param axiom_list: list of Axiom that need to be verified in the loop. Note that identy should be '0'.
         :return: a loop that verify the axiom list
         """
+        self.reset_loop()
+        self.first_print_verbose = True
+
         self.loop[0, :] = self.elements
         self.loop[:, 0] = self.elements
-        self.number_of_case_to_fill = self.n * self.n - 2 * self.n + 1
+        self.number_of_case_to_fill = (self.n - 1) ** 2
         self.loop_model = LoopModel(self.loop)
 
         for i in range(self.n):
@@ -77,7 +98,8 @@ class LoopGenerator:
                 self.possible_elements[i, j, :] = self.initial_probabilities
 
         self.axioms = axiom_list
-
+        for axiom in self.axioms:
+            axiom.preparse()
         self.aux_generate(1, 1)
 
         return self.loop
@@ -87,7 +109,7 @@ class LoopGenerator:
         is_there_element_to_draw = True
         number_case_filled = 0
         while True:
-            print(len(self.trajectory))
+            self.print_information(i, j)
             self.trajectory.append((i, j))
             if not is_there_element_to_draw:  # if no possible elements are left, we go back
                 self.possible_elements[i, j, :] = self.initial_probabilities
@@ -117,7 +139,7 @@ class LoopGenerator:
             jj = (jj + 1) % self.n
             if jj == 0:
                 ii += 1
-                jj += 1
+                jj = 1
             return ii, jj
 
         if self.fill_method == "random":
@@ -134,8 +156,10 @@ class LoopGenerator:
     def previous_element_index(self, i, j):
         ii, jj = i, j
         if self.fill_method == "lexico":
+            jj = jj - 1
             ii = (ii - (jj < 1))
-            jj = (jj - 1) % self.n
+            if jj == 0:
+                jj = self.n - 1
             return ii, jj
 
         if self.fill_method == "random":
@@ -205,3 +229,21 @@ class LoopGenerator:
 
     def get_trajectory(self):
         return self.trajectory
+
+    def print_information(self, i, j):
+        # assume the filling method is lexico
+        bar_len = self.n
+        if self.verbose:
+            percent = round((i * self.n + j + 1) / self.n ** 2, 2)
+            block = int(round(bar_len * percent))
+            text = "Percent of the loop filled : [{0}] {1}%".format("#" * block + "-" * (bar_len - block),
+                                                                    percent * 100)
+
+            if self.first_print_verbose:
+                self.first_print_verbose = False
+                text = "\n" + text
+            else:
+                text = "\r" + text
+
+            print(text, end='')
+
