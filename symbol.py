@@ -15,6 +15,16 @@ class Symbol:
         return str(self)
 
 
+class Variable(Symbol):
+    def __init__(self, name, quantification):
+        super().__init__(name, SymbolType.OPERAND, name)
+        self.quantification = quantification
+        self.is_variable = True
+
+    def __repr__(self):
+        return str(self)
+
+
 class SymbolType(Enum):
     OPERAND = 0
     OPERATOR = 1

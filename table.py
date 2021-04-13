@@ -49,6 +49,8 @@ class TableMaker:
 
     def make_table(self, expr_, check_cache=False, cache_sub=False):
         """
+        WARNING : if the Expr is `Ax Ay Az x*y` this method will return a table of dim 2, avoiding
+        unnecessary z dimension.
         :param expr_: Expr, expression to make a table with
         :param check_cache: optional use od model's cache_manager. If True, this method will check for every
         sub-expression if it's not already cached
@@ -59,7 +61,11 @@ class TableMaker:
         rpn = parser.expr_to_rpn(self.model, expr_)
         table_function = self.model.arithmetic_function_generator.make(rpn)
 
-        ndim = len(expr_.variables)
+        ndim = 0
+        rpn_repr = [s.repr for s in rpn]
+        for v in expr_.variables:
+            if v.repr in rpn_repr:
+                ndim += 1
         table_array = empty([self.model.cardinal] * ndim)
         table = Table(table_array, self.model.elements, ndim=ndim)
 

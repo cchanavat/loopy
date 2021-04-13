@@ -48,7 +48,7 @@ class Model:
     def rdiv(self, x, y):
         return self.rdiv_table.of(x, y)
 
-    def is_true(self, axiom: Axiom):
+    def truth_value(self, axiom: Axiom):
         av = AxiomVerifier(self)
         return av.is_true(axiom)
 
@@ -104,10 +104,8 @@ class ArithmeticFunctionGenerator:
                 stack.append(result)
             else:
                 if not token.is_variable:
-
                     stack.append(lambda *, _num=token.repr, **namespace: _num)
                 else:
-
                     stack.append(lambda *, _token=token.repr, **namespace: namespace[_token])
 
         return stack.pop()

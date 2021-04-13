@@ -37,7 +37,7 @@ class Parser:
                         tok_symbol = symbol
                         tok_len = j
             if tok_symbol is None:
-                raise Exception(f"Could not tokenize properly {expr}")
+                raise Exception(f"Could not tokenize properly `{expr}`. Unknown token in `{temp_tok}`")
 
             tokenized.append(tok_symbol)
             i += tok_len
