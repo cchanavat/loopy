@@ -29,6 +29,7 @@ class Parser:
 
         while i < len_expr:
             tok_symbol = None
+            temp_tok = ''
             tok_len = 0
             for j in range(1, 1 + max_token_len):
                 temp_tok = expr[i:i+j]
@@ -66,16 +67,20 @@ class Parser:
                     output_queue.append(operator_stack.pop())
                 operator_stack.pop()
             else:
-                raise Exception(f"SymbolType {symbol.type} can't be converted")
+                raise Exception(f"SymbolType `{symbol.type}` can't be converted.")
 
         while len(operator_stack) > 0:
-            output_queue.append(operator_stack.pop())
+            op = operator_stack.pop()
+            if op.type != SymbolType.OPERATOR:
+                raise Exception(f"Expression not valid, `{op}` should be an operator.")
+            output_queue.append(op)
 
         return tuple(output_queue)
 
     def expr_to_rpn(self, model, expr, variables=None):
         """
             Transforms an expression to its symbolic RPN
+            :return a tuple of Symbol
         """
         tok = self.tokenize(model, expr, variables)
         return self.tokenized_to_rpn(tok)

@@ -1,3 +1,6 @@
+from enum import Enum
+from itertools import product
+
 from loopy.language import Language
 from loopy.parser import Parser
 from loopy.symbol import Variable, SymbolType
@@ -122,6 +125,11 @@ class Axiom:
         self.left = Expr(left, self.variables)
         self.right = Expr(right, self.variables)
 
+        self.left_rpn = None
+        self.right_rpn = None
+
+        self.ndim = len(self.variables)
+
     def __str__(self):
         return self.base_expr
 
@@ -130,7 +138,20 @@ class AxiomVerifier:
     def __init__(self, model):
         self.model = model
 
-    def is_true(self, axiom: Axiom):
+    def is_true(self, axiom: Axiom, arithmetic_fun=None):
+        """
+            Verify whether an axiom is True in within self.model. If no arithmetic_fun is given,
+            it will calculate the table of the right and left member, so it is better to pre-caclculate the this
+            function if is_true is used a large number of time over the same axiom
+        :param axiom: the axiom to verify
+        :param arithmetic_fun: the lambda_function that will be called with each instance of the variables
+        :return: If the axiom is true within self.model
+        """
+        if arithmetic_fun is None:
+            return self._is_true_no_fun(axiom)
+        return self._is_true_fun(axiom, arithmetic_fun)
+
+    def _is_true_no_fun(self, axiom):
         left = axiom.left
         right = axiom.right
 
@@ -153,7 +174,9 @@ class AxiomVerifier:
             if not variables:
                 l_instance = left.coordinates_formatter(partial_instance, self.model)
                 r_instance = right.coordinates_formatter(partial_instance, self.model)
-                return left_table.of(*l_instance) == right_table.of(*r_instance)
+                # we need the = defined in model because of the special char
+                return self.model.equal(left_table.of(*l_instance), right_table.of(*r_instance))
+
             var = variables[0]
 
             if var.quantification == SymbolType.UNIVERSAL_QUANTIFIER:
@@ -170,3 +193,125 @@ class AxiomVerifier:
             return is_verified
 
         return is_true_aux(variable_list, [])
+
+    def _is_true_fun(self, axiom: Axiom, fun):
+        variable_list = axiom.variables
+
+        def is_true_aux(variables, partial_instance):
+            if not variables:
+                return fun(**partial_instance)
+            var = variables[0]
+
+            if var.quantification == SymbolType.UNIVERSAL_QUANTIFIER:
+                is_verified = True
+                for x in self.model.elements:
+                    # Python is lazy so it should avoid unnecessary recursive calls
+                    partial_instance[var.repr] = x
+                    is_verified = is_verified and is_true_aux(variables[1::], partial_instance)
+
+            else:
+                is_verified = False
+                for x in self.model.elements:
+                    partial_instance[var.repr] = x
+                    is_verified = is_verified or is_true_aux(variables[1::], partial_instance)
+
+            return is_verified
+
+        return is_true_aux(variable_list, {})
+
+
+class TruthValue(Enum):
+    FALSE = 0
+    TRUE = 1
+    MAYBE = 2
+
+
+class AxiomVerifierSAT:
+    def __init__(self, axiom: Axiom, model):
+        self.model = model
+        self.axiom = axiom
+        self.parser = Parser()
+
+        self.left_rpn = [tok.repr for tok in self.parser.expr_to_rpn(axiom.left, self.model)]
+        self.right_rpn = [tok.repr for tok in self.parser.expr_to_rpn(axiom.right, self.model)]
+
+        self.literals_list = []
+
+        self.term_dictionary = TermDictionary()
+
+        var_value_map = {
+            "*": self.model.mul,
+            "/": self.model.rdiv,
+            "\\": self.model.ldiv_lexical_order
+        }
+
+        for i, instance in enumerate(product(self.model.elements, repeat=self.axiom.ndim)):
+            for var, val in zip(self.axiom.variables, instance):
+                var_value_map[var.repr] = val
+
+            left = []
+            right = []
+            for tok in self.left_rpn:
+                left.append(var_value_map[tok])
+            for tok in self.right_rpn:
+                right.append(var_value_map[tok])
+
+            self.literals_list.append(Literal(left, right, id_=i, term_dict=self.term_dictionary))
+
+
+class Literal:
+    def __init__(self, left, right, id_: int, term_dict):
+        self.left = left
+        self.right = right
+
+        self.left_evaluated = False
+        self.right_evaluated = False
+
+        self.id = id_
+        self.term_dict = term_dict
+
+    def is_true(self) -> TruthValue:
+        if self.left_evaluated and self.right_evaluated:
+            return TruthValue.TRUE if self.left == self.right else TruthValue.FALSE
+        return TruthValue.MAYBE
+
+    def update(self, term, value):
+        n_term = len(term)
+        n_left = len(self.left)
+        n_right = len(self.right)
+
+        i = 0
+        while i <= n_left - n_term:
+            sub_list = self.left[i:(i + n_term)]
+            if self.left[i] == sub_list[0] and sub_list == term:
+                self.left[i:(i + n_term)] = [value]
+                i = 0
+                continue
+            i += 1
+
+        while i <= n_right - n_term:
+            sub_list = self.right[i:(i + n_term)]
+            if self.right[i] == sub_list[0] and sub_list == term:
+                self.right[i:(i + n_term)] = [value]
+                i = 0
+                continue
+            i += 1
+
+
+class TermDictionary:
+    def __init__(self):
+        self.dict = {}
+
+    def add(self, term, literal: Literal):
+        if term in self.dict.keys():
+            self.dict[term][literal.id] = literal
+        else:
+            self.dict[term] = {literal.id: literal}
+
+    def remove(self, term, literal: Literal) -> bool:
+        return False if self.dict[term].pop(literal.id, None) is None else True
+
+    def update(self, term, value):
+        for literal in self.dict[term]:
+            literal.update(term, value)
+            self.remove(term, literal)

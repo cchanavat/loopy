@@ -1,3 +1,4 @@
+from numpy import array
 from loopy.model import *
 
 table = [["0", "1", "2", "3", "4", "5", "6", "7"],
@@ -13,7 +14,7 @@ table = [["0", "1", "2", "3", "4", "5", "6", "7"],
 # model = Model(table)
 # print(model.mul_table)
 # print(model.ldiv_table)
-# model.test()
+#
 #
 # ax1 = Axiom("Ax Ay x*y\\a = x*y")
 # ax2 = Axiom(r"Aa Eb a*b\a = b*a")
@@ -30,8 +31,8 @@ table = [["0", "1", "2", "3", "4", "5", "6", "7"],
 #
 # ax1 = Axiom("Ax Ey x*y = 0")
 # ax2 = Axiom("Ex Ay x*y = 0")
-# print(model.is_true(ax1))
-# print(model.is_true(ax2))
+# print(model.truth_value(ax1))
+# print(model.truth_value(ax2))
 
 moufang = [["0", "1", "2", "3", "4", "5"],
            ["1", "0", "4", "5", "2", "3"],
@@ -41,10 +42,10 @@ moufang = [["0", "1", "2", "3", "4", "5"],
            ["5", "3", "1", "2", "0", "4"]]
 moufang = array(moufang)
 model = Model(moufang)
-#
-# ax = Axiom("Ax Ay Az z*(x*(z*y)) = ((z*x)*z)*y", model.lang)
-# print(model.is_true(ax))
 
+# ax = Axiom("Ax Ay Az z*(x*(z*y)) = ((z*x)*z)*y", model.lang)
+# print(model.truth_value(ax))
+#
 # a1 = Axiom(r"Ax Ay Az Au (u*(x*(y*z))\((x*y)*z))\((x*(y*z))\((x*y)*z)*u) = 0")
 # a2 = Axiom(r"Ax Ay Az Au ((y*x)\(x*y)*(z*u))\(((y*x)\(x*y)*z)*u) = 0")
 # a3 = Axiom(r"Ax Ay Az Au (x*((z*y)\(y*z)*u))\((x*(z*y)\(y*z))*u) = 0")
@@ -60,10 +61,13 @@ model = Model(moufang)
 
 table = array(table)
 model = Model(table)
-ax1 = Axiom(r"Ax Ey x*y = y*x")
-ax2 = Axiom(r"Ax Ay x*y = x*y")
-
-axs = [ax1, ax2]
-
-for ax in axs:
-    print(ax, model.truth_value(ax))
+# ax1 = Axiom(r"Ax Ey x*y = y*x")
+# ax2 = Axiom(r"Ax Ay x*y = x*y")
+# ax3 = Axiom(r"Ax Ey y*x = 55")
+#
+# axs = [ax1, ax2, ax3]
+#
+# for ax in axs:
+#     print(ax, model.truth_value(ax))
+ax = Axiom(r"Ay Ax x*y = y")
+model.truth_value(ax)
