@@ -7,4 +7,4 @@ for i in range(1, 5):
         print(res)
     table = literal_eval(res)
     D = Loop(np.array(table, dtype=int) - 1)
-    np.savetxt(f"/home/mathieu/stage/src/loopapy/groups/D{2*i}.group", D.tmul, fmt="%i")
+    np.savetxt(f"/home/clemence/stage/src/loopapy/groups/D{2*i}.group", D.tmul, fmt="%i")
