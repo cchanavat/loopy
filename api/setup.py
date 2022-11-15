@@ -1,1 +1,1 @@
-THIS_DIR = "/home/mathieu/stage/src/loopapy/"
+THIS_DIR = "/home/clemence/stage/src/loopapy/"
